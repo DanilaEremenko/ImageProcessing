@@ -8,33 +8,25 @@ def conv(img_sub_arr, kernel):
 
 
 def full_conv(img_arr, kernel):
+    res = np.zeros(img_arr.shape)
     for x in range(0, img_arr.shape[0] - kernel.shape[0] + 1):
         for y in range(0, img_arr.shape[1] - kernel.shape[1] + 1):
-            img_arr[x][y] = conv(
+            res[x][y] = conv(
                 img_sub_arr=img_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
                 kernel=kernel
             )
-            img_arr[x][y] = min(255, img_arr[x][y])
-    return img_arr
+    return res
 
 
 def convolve_and_show(img_arr, kernel=None, title=None):
-    def get_zeros(orientation):
-        if orientation == 'vertical':
-            return np.zeros((expanded_arr.shape[0], 1))
-        elif orientation == 'horizontal':
-            return np.zeros((1, expanded_arr.shape[1]))
-        else:
-            raise Exception('Unexpected orientation')
-
     if kernel is not None:
         if len(kernel) > 2:
             expanded_arr = img_arr.copy()
 
-            expanded_arr = np.concatenate((get_zeros('horizontal'), expanded_arr), axis=0)
-            expanded_arr = np.concatenate((get_zeros('vertical'), expanded_arr), axis=1)
-            expanded_arr = np.concatenate((expanded_arr, get_zeros('horizontal')), axis=0)
-            expanded_arr = np.concatenate((expanded_arr, get_zeros('vertical')), axis=1)
+            expanded_arr = np.concatenate((expanded_arr[0][np.newaxis], expanded_arr), axis=0)
+            expanded_arr = np.concatenate((expanded_arr[:, 0][:, np.newaxis], expanded_arr), axis=1)
+            expanded_arr = np.concatenate((expanded_arr, expanded_arr[-1][np.newaxis]), axis=0)
+            expanded_arr = np.concatenate((expanded_arr, expanded_arr[:, -1][:, np.newaxis]), axis=1)
 
             expanded_arr = np.array(expanded_arr, dtype='uint8')
 
