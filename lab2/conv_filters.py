@@ -17,7 +17,6 @@ def full_conv(img_arr, kernel):
         expanded_arr = np.concatenate((expanded_arr, expanded_arr[-1][np.newaxis]), axis=0)
         expanded_arr = np.concatenate((expanded_arr, expanded_arr[:, -1][:, np.newaxis]), axis=1)
 
-        expanded_arr = np.array(expanded_arr, dtype='uint8')
     else:
         expanded_arr = img_arr
 
