@@ -59,8 +59,8 @@ def main():
         'ROBERTS LEFT': np.array([[1, 0],
                                   [0, -1]]),
 
-        'ROBERTS RIGHT': np.array([[1, 0],
-                                   [0, -1]]),
+        'ROBERTS RIGHT': np.array([[0, 1],
+                                   [-1, 0]]),
 
         'SOBEL HORIZONTAL': np.array([[-1, -2, -1],
                                       [0, 0, 0],
