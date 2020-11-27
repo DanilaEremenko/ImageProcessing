@@ -6,9 +6,22 @@ def conv(img_sub_arr, kernel):
     return np.sum(np.multiply(img_sub_arr, kernel))
 
 
-def full_conv(img_arr, kernel):
+def full_conv(img_arr, kernel_data):
+    # adaptive kernels mode
+    if type(kernel_data) is dict:
+        adaptive_mode = True
+        kernel = np.zeros(kernel_data['shape'])
+    # default mode
+    elif type(kernel_data) is np.ndarray:
+        adaptive_mode = False
+        kernel = kernel_data
+    else:
+        raise Exception('Unexpected kernel data ' + str(type(kernel_data)))
+
     # expand
     if len(kernel) > 2:
+        if not all([dim % 2 == 1 for dim in kernel.shape]):
+            raise Exception('All kernel dims should be an odd')
 
         expand_len = int(len(kernel) // 2)
         expanded_arr = img_arr
@@ -27,6 +40,12 @@ def full_conv(img_arr, kernel):
     res = np.zeros(img_arr.shape)
     for x in range(0, expanded_arr.shape[0] - kernel.shape[0] + 1):
         for y in range(0, expanded_arr.shape[1] - kernel.shape[1] + 1):
+            if adaptive_mode:
+                kernel = kernel_data['func'](
+                    expanded_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
+                    **kernel_data['args']
+                )
+
             res[x][y] = conv(
                 img_sub_arr=expanded_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
                 kernel=kernel
