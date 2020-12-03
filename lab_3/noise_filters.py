@@ -13,11 +13,10 @@ def get_gaussian_kernel(small_img_arr, sigma):
     kernel = np.zeros(small_img_arr.shape)
     for x in range(small_img_arr.shape[0]):
         for y in range(small_img_arr.shape[1]):
-            kernel[x][y] = np.exp(-((x - center_x) ** 2 + (y - center_y) ** 2) / (2 * sigma ** 2))
+            kernel[x][y] = np.exp(-1 / 2 * ((x - center_x) ** 2 + (y - center_y) ** 2) / (sigma ** 2))
 
-    # after getting kernel
-    # w = np.sum(kernel)
-    # img_filtered[p_y, p_x, :] = gp / (w + np.finfo(np.float32).eps)
+    # normalizing
+    kernel = kernel / np.sum(kernel)
 
     return kernel
 
@@ -33,16 +32,13 @@ def main():
     img_noised = img + get_gaussian_noise(mean=0, sigma=sigma, shape=img.shape)
 
     kernels_dict = {
-
-        'MEAN FILTER': np.array([[1 / 9, 1 / 9, 1 / 9],
-                                 [1 / 9, 1 / 9, 1 / 9],
-                                 [1 / 9, 1 / 9, 1 / 9]]),
+        'MEAN FILTER': np.ones(shape=(kernel_len, kernel_len)) / (kernel_len * kernel_len),
 
         'GAUSSIAN FILTER': {
             'func': get_gaussian_kernel,
             'shape': (kernel_len, kernel_len),
             'args': {'sigma': sigma}
-        },
+        }
     }
 
     # ----------------------- RUNING --------------------------------------
