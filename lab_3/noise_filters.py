@@ -7,18 +7,25 @@ def get_gaussian_noise(mean, sigma, shape):
     return np.random.normal(mean, sigma, shape)
 
 
-def get_gaussian_kernel(small_img_arr, sigma):
+def gaussian(x, sigma):
+    return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(-(x ** 2) / (2 * (sigma ** 2)))
+
+
+def distance(x1, y1, x2, y2):
+    return np.sqrt(np.abs((x1 - x2) ** 2 - (y1 - y2) ** 2))
+
+
+def get_bilateral_kernel(small_img_arr, sigma_i, sigma_s):
+    kernel = np.zeros(small_img_arr.shape)
     center_x = small_img_arr.shape[0] // 2
     center_y = small_img_arr.shape[1] // 2
-    kernel = np.zeros(small_img_arr.shape)
     for x in range(small_img_arr.shape[0]):
         for y in range(small_img_arr.shape[1]):
-            kernel[x][y] = np.exp(-1 / 2 * ((x - center_x) ** 2 + (y - center_y) ** 2) / (sigma ** 2))
-
-    # normalizing
-    kernel = kernel / np.sum(kernel)
-
-    return kernel
+            gi = gaussian(small_img_arr[x][y] - small_img_arr[center_x][center_y], sigma_i)
+            gs = gaussian(distance(x, y, center_x, center_y), sigma_s)
+            wp = gi * gs
+            kernel[x][y] = wp
+    return kernel / kernel.sum()
 
 
 def main():
@@ -34,10 +41,10 @@ def main():
     kernels_dict = {
         'MEAN FILTER': np.ones(shape=(kernel_len, kernel_len)) / (kernel_len * kernel_len),
 
-        'GAUSSIAN FILTER': {
-            'func': get_gaussian_kernel,
+        'BILATERAL FILTER': {
+            'func': get_bilateral_kernel,
             'shape': (kernel_len, kernel_len),
-            'args': {'sigma': sigma}
+            'args': {'sigma_i': sigma, 'sigma_s': sigma}
         }
     }
 
