@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from my_image_processing import convolve_and_show
+from convolve_filters import convolve_and_show
 
 
 def main():

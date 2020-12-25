@@ -1,5 +1,5 @@
 import cv2
-from my_image_processing import convolve_and_show
+from convolve_filters import convolve_and_show
 from noise_filters import get_gaussian_kernel, get_bilateral_kernel_np
 from noise_filters_cython import get_bilateral_kernel_cython
 import numpy as np
