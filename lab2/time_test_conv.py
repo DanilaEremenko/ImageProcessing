@@ -1,5 +1,5 @@
 from convolve_filters_cython import conv_cython
-from convolve_filters import conv
+from convolve_filters import conv_np
 import time
 import numpy as np
 
@@ -8,7 +8,7 @@ kernel = np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]])
 
 compare_dict = {
     'cython': {'func': conv_cython},
-    'python_np': {'func': conv}
+    'python_np': {'func': conv_np}
 }
 
 CALL_NUM = 100_000

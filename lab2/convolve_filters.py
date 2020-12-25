@@ -1,12 +1,13 @@
 import numpy as np
 from matplotlib import pyplot as plt
+from convolve_filters_cython import conv_cython
 
 
-def conv(img_sub_arr, kernel):
+def conv_np(img_sub_arr, kernel):
     return np.sum(np.multiply(img_sub_arr, kernel))
 
 
-def full_conv(img_arr, kernel_data):
+def full_conv(img_arr, kernel_data, conv_func=conv_np):
     # adaptive kernels mode
     if type(kernel_data) is dict:
         adaptive_mode = True
@@ -46,7 +47,7 @@ def full_conv(img_arr, kernel_data):
                     **kernel_data['args']
                 )
 
-            res[x][y] = conv(
+            res[x][y] = conv_func(
                 img_sub_arr=expanded_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
                 kernel=kernel
             )
