@@ -1,4 +1,4 @@
-from conv_cython import conv_cython
+from convolve_filters_cython import conv_cython
 from convolve_filters import conv
 import time
 import numpy as np
