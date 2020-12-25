@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from my_image_processing import convolve_and_show
+from noise_filters_cython import get_bilateral_kernel_cython
 
 
 def get_gaussian_noise(mean, sigma, shape):
