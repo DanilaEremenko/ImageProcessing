@@ -7,10 +7,10 @@ cdef extern from "math.h":
 
 cdef float pi = 3.14159265
 
-def gaussian(float x, float sigma):
+cdef gaussian(float x, float sigma):
     return (1.0 / (2 * pi * (sigma ** 2))) * exp(-(x ** 2) / (2 * (sigma ** 2)))
 
-def distance(float x1, float y1, float x2, float y2):
+cdef distance(float x1, float y1, float x2, float y2):
     return sqrt(abs((x1 - x2) ** 2 - (y1 - y2) ** 2))
 
 def get_bilateral_kernel_cython(small_img_arr, float sigma_i, float sigma_s):
@@ -20,7 +20,8 @@ def get_bilateral_kernel_cython(small_img_arr, float sigma_i, float sigma_s):
 
     cdef int center = small_img_arr.shape[0] // 2
     kernel = np.zeros(shape=small_img_arr.shape)
-
+    cdef float gi
+    cdef float gs
     for x in range(x_max):
         for y in range(y_max):
             gi = gaussian(small_img_arr[x, y] - small_img_arr[center, center], sigma_i)
