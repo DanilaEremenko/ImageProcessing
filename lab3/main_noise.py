@@ -1,6 +1,6 @@
 import cv2
 from convolve_filters import convolve_and_show
-from noise_filters import get_gaussian_kernel, get_bilateral_kernel_np
+from noise_filters import get_gaussian_kernel, get_bilateral_kernel_np, non_local_means
 from noise_filters_cython import get_bilateral_kernel_cython
 import numpy as np
 import time
@@ -54,6 +54,23 @@ def main():
             title=title + '\n'
         )
         print(f"{title} time = {time.time() - start_time}")
+
+    import matplotlib.pyplot as plt
+
+    start_time = time.time()
+    res = non_local_means(
+        noisy=img_noised,
+        big_window_size=20,
+        small_window_size=6,
+        sigma=sigma,
+        h=14,
+        verbose=False
+    )
+    title = 'Non-local means'
+    print(f"{title} time = {time.time() - start_time}")
+    plt.imshow(res, cmap='gray')
+    plt.title(title)
+    plt.show()
 
 
 if __name__ == '__main__':
