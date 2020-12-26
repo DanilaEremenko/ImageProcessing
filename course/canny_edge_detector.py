@@ -11,8 +11,8 @@ class CannyEdgeDetector:
                  weak_pixel=75, strong_pixel=255,
                  lowthreshold=0.05, highthreshold=0.15):
         self.img_smoothed = None
-        self.grad_matrix = None
-        self.theta_mat = None
+        self.grad_intens_matrix = None
+        self.grad_direct_matrix = None
         self.non_max_img = None
         self.threshold_img = None
         self.weak_pixel = weak_pixel
@@ -38,38 +38,38 @@ class CannyEdgeDetector:
         theta = np.arctan2(conv_horizontal, conv_vertical)
         return grad_matrix, theta
 
-    def non_max_suppression(self, img, D):
+    def non_max_suppression(self, intensity_matrix, direction_matrix):
         """
         make same thickness and intensity for boundaries
         """
-        thinned_img = np.zeros(img.shape, dtype=np.int32)
-        angle = D * 180. / np.pi
-        angle[angle < 0] += 180
+        thinned_img = np.zeros(intensity_matrix.shape, dtype=np.int32)
+        angle_matrix = direction_matrix * 180. / np.pi
+        angle_matrix[angle_matrix < 0] += 180
 
-        for y in range(1, img.shape[0] - 1):
-            for x in range(1, img.shape[1] - 1):
+        for y in range(1, intensity_matrix.shape[0] - 1):
+            for x in range(1, intensity_matrix.shape[1] - 1):
                 q = 255
                 r = 255
 
                 # angle 0
-                if (0 <= angle[y, x] < 22.5) or (157.5 <= angle[y, x] <= 180):
-                    q = img[y, x + 1]
-                    r = img[y, x - 1]
+                if (0 <= angle_matrix[y, x] < 22.5) or (157.5 <= angle_matrix[y, x] <= 180):
+                    q = intensity_matrix[y, x + 1]
+                    r = intensity_matrix[y, x - 1]
                 # angle 45
-                elif (22.5 <= angle[y, x] < 67.5):
-                    q = img[y + 1, x - 1]
-                    r = img[y - 1, x + 1]
+                elif (22.5 <= angle_matrix[y, x] < 67.5):
+                    q = intensity_matrix[y + 1, x - 1]
+                    r = intensity_matrix[y - 1, x + 1]
                 # angle 90
-                elif (67.5 <= angle[y, x] < 112.5):
-                    q = img[y + 1, x]
-                    r = img[y - 1, x]
+                elif (67.5 <= angle_matrix[y, x] < 112.5):
+                    q = intensity_matrix[y + 1, x]
+                    r = intensity_matrix[y - 1, x]
                 # angle 135
-                elif (112.5 <= angle[y, x] < 157.5):
-                    q = img[y - 1, x - 1]
-                    r = img[y + 1, x + 1]
+                elif (112.5 <= angle_matrix[y, x] < 157.5):
+                    q = intensity_matrix[y - 1, x - 1]
+                    r = intensity_matrix[y + 1, x + 1]
 
-                if (img[y, x] >= q) and (img[y, x] >= r):
-                    thinned_img[y, x] = img[y, x]
+                if (intensity_matrix[y, x] >= q) and (intensity_matrix[y, x] >= r):
+                    thinned_img[y, x] = intensity_matrix[y, x]
                 else:
                     thinned_img[y, x] = 0
 
@@ -112,8 +112,8 @@ class CannyEdgeDetector:
 
     def detect(self, img):
         self.img_smoothed = full_conv(img, get_gaussian_kernel(self.kernel_size, self.sigma))
-        self.grad_matrix, self.theta_mat = self.sobel_filters(self.img_smoothed)
-        self.non_max_img = self.non_max_suppression(self.grad_matrix, self.theta_mat)
+        self.grad_intens_matrix, self.grad_direct_matrix = self.sobel_filters(self.img_smoothed)
+        self.non_max_img = self.non_max_suppression(self.grad_intens_matrix, self.grad_direct_matrix)
         self.threshold_img = self.threshold(self.non_max_img)
         self.hysteresis_img = self.hysteresis(self.threshold_img)
 
@@ -126,7 +126,7 @@ if __name__ == '__main__':
         kernel_size=5,
         lowthreshold=0.09,
         highthreshold=0.17,
-        weak_pixel=1,
+        weak_pixel=75,
         strong_pixel=255
     )
 
@@ -146,7 +146,8 @@ if __name__ == '__main__':
 
         detector.detect(np.array(img_orig, dtype='float64'))
         visualize(detector.img_smoothed, '1: img smoothed')
-        visualize(detector.grad_matrix, '2: gradient mat')
+        visualize(detector.grad_intens_matrix, '2.1: gradient intensity matrix')
+        visualize(detector.grad_direct_matrix, '2.2: gradient direction matrix')
         visualize(detector.non_max_img, '3: non maximum suppression')
         visualize(detector.threshold_img, '4: threshold')
         visualize(detector.hysteresis_img, '5: hysteresis(result)')
