@@ -5,14 +5,17 @@ from numba import jit
 ######################################################################
 # -------------------- BILATERAL NP ----------------------------------
 ######################################################################
+@jit(nopython=True)
 def gaussian_np(x, sigma):
     return (1.0 / (2 * np.pi * (sigma ** 2))) * np.exp(-(x ** 2) / (2 * (sigma ** 2)))
 
 
+@jit(nopython=True)
 def distance_np(x1, y1, x2, y2):
     return np.sqrt(np.abs((x1 - x2) ** 2 - (y1 - y2) ** 2))
 
 
+@jit(nopython=True)
 def get_bilateral_kernel_np(small_img_arr, sigma_i, sigma_s):
     # assert len(small_img_arr.shape) == 2
     # assert small_img_arr.shape[0] == small_img_arr.shape[1]

@@ -1,8 +1,10 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from convolve_filters_cython import conv_cython
+from numba import jit
 
 
+@jit(nopython=True)
 def conv_np(img_sub_arr, kernel):
     return np.sum(np.multiply(img_sub_arr, kernel))
 
