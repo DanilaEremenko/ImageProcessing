@@ -1,6 +1,6 @@
 import cv2
 from convolve_filters import convolve_and_show
-from noise_filters import get_gaussian_kernel_py, get_bilateral_kernel_np, non_local_means
+from noise_filters import get_gaussian_kernel_py, get_bilateral_kernel_np, non_local_means, get_bilateral_kernel_py
 from noise_filters_cython import get_bilateral_kernel_cython
 import numpy as np
 import time
@@ -32,30 +32,34 @@ def main():
         'NUMPY BILATERAL FILTER': {
             'func': get_bilateral_kernel_np,
             'shape': (kernel_len, kernel_len),
-            'args': {'sigma_i': sigma, 'sigma_s': sigma}
+            'args': {'sigma_i': sigma * 3, 'sigma_s': sigma / 2}
+        },
+        'PYTHON BILATERAL FILTER': {
+            'func': get_bilateral_kernel_py,
+            'shape': (kernel_len, kernel_len),
+            'args': {'sigma_i': sigma * 3, 'sigma_s': sigma / 2}
         },
 
         'CYTHON BILATERAL FILTER': {
             'func': get_bilateral_kernel_cython,
             'shape': (kernel_len, kernel_len),
-            'args': {'sigma_i': sigma, 'sigma_s': sigma}
+            'args': {'sigma_i': sigma * 3, 'sigma_s': sigma / 2}
         },
     }
 
     # ----------------------- RUNING --------------------------------------
-    convolve_and_show(img, title='ORIGINAL IMAGE')
-    convolve_and_show(img_noised, title='NOISED IMAGE')
+    convolve_and_show(img, title='ORIGINAL IMAGE', original_image=img)
+    convolve_and_show(img_noised, title='NOISED IMAGE', original_image=img)
 
     for title, kernel in kernels_dict.items():
         start_time = time.time()
         convolve_and_show(
             img_arr=img_noised,
             kernel=kernel,
-            title=title + '\n'
+            title=title,
+            original_image=img
         )
         print(f"{title} time = {time.time() - start_time}")
-
-    import matplotlib.pyplot as plt
 
     start_time = time.time()
     res = non_local_means(
@@ -68,9 +72,7 @@ def main():
     )
     title = 'Non-local means'
     print(f"{title} time = {time.time() - start_time}")
-    plt.imshow(res, cmap='gray')
-    plt.title(title)
-    plt.show()
+    convolve_and_show(img_arr=res, title=title, original_image=img)
 
 
 if __name__ == '__main__':
