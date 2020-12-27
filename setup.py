@@ -5,7 +5,10 @@ from Cython.Build import cythonize
 
 setup(
     ext_modules=cythonize(
-        "lab2/convolve_filters_cython.pyx",
-        "lab3/noise_filters_cython.pyx"
+        [
+            "lab2/convolve_filters_cython.pyx",
+            "lab3/noise_filters_cython.pyx"
+        ]
+
     )
 )
