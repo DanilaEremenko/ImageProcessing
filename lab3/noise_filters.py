@@ -35,10 +35,12 @@ def get_bilateral_kernel_np(small_img_arr, sigma_i, sigma_s):
 ######################################################################
 # -------------------- BILATERAL PY ----------------------------------
 ######################################################################
+@jit(nopython=True)
 def distance_py(x1, y1, x2, y2):
     return math.sqrt(abs((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
 
+@jit(nopython=True)
 def get_bilateral_kernel_py(small_img_arr, sigma_i, sigma_s):
     center = small_img_arr.shape[0] // 2
     kernel = np.zeros(shape=small_img_arr.shape)
@@ -59,6 +61,7 @@ def gaussian_np(x, sigma):
     return (1.0 / (sigma * np.sqrt(2 * np.pi))) * np.exp(-1 / 2 * ((x / sigma) ** 2))
 
 
+@jit(nopython=True)
 def get_gaussian_kernel_np(kernel_len, sigma):
     distance_vector = np.linspace(-(kernel_len - 1) / 2., (kernel_len - 1) / 2., kernel_len)
     kernel_1d = gaussian_np(distance_vector, sigma=sigma)
@@ -69,10 +72,12 @@ def get_gaussian_kernel_np(kernel_len, sigma):
 ######################################################################
 # -------------------- GAUSSIAN_PY -----------------------------------
 ######################################################################
+@jit(nopython=True)
 def gaussian_py(x, sigma):
     return (1.0 / (sigma * math.sqrt(2 * math.pi))) * math.exp(-1 / 2 * (x / sigma) ** 2)
 
 
+@jit(nopython=True)
 def get_gaussian_kernel_py(kernel_len, sigma):
     center = kernel_len // 2
     kernel = np.zeros((kernel_len, kernel_len))

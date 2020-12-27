@@ -1,15 +1,24 @@
 import numpy as np
 from matplotlib import pyplot as plt
-from convolve_filters_cython import conv_cython
 from numba import jit
 
 
 @jit(nopython=True)
-def conv_np(img_sub_arr, kernel):
-    return np.sum(np.multiply(img_sub_arr, kernel))
+def conv_py(arr, kernel):
+    kernel_len = len(arr)
+    sum = 0
+    for x in range(kernel_len):
+        for y in range(kernel_len):
+            sum += arr[x, y] * kernel[x, y]
+    return sum
 
 
-def full_conv(img_arr, kernel_data, conv_func=conv_np):
+@jit(nopython=True)
+def conv_np(arr, kernel):
+    return np.sum(np.multiply(arr, kernel))
+
+
+def full_conv(img_arr, kernel_data, conv_func=conv_py):
     # adaptive kernels mode
     if type(kernel_data) is dict:
         adaptive_mode = True
