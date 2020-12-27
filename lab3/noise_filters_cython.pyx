@@ -1,17 +1,18 @@
 import numpy as np
+import math
 
 cdef extern from "math.h":
     float exp(float theta)
     float abs(float theta)
     float sqrt(float theta)
 
-cdef float pi = 3.14159265
+cdef float pi = math.pi
 
 cdef gaussian(float x, float sigma):
-    return (1.0 / (2 * pi * (sigma ** 2))) * exp(-(x ** 2) / (2 * (sigma ** 2)))
+    return (1.0 / (sigma * sqrt(2 * pi))) * exp(-1 / 2 * (x / sigma) ** 2)
 
 cdef distance(float x1, float y1, float x2, float y2):
-    return sqrt(abs((x1 - x2) ** 2 - (y1 - y2) ** 2))
+    return sqrt(abs((x1 - x2) ** 2 + (y1 - y2) ** 2))
 
 def get_bilateral_kernel_cython(small_img_arr, float sigma_i, float sigma_s):
     cdef int kernel_len = len(small_img_arr)

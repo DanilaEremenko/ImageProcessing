@@ -1,6 +1,6 @@
 import cv2
 from convolve_filters import convolve_and_show
-from noise_filters import get_gaussian_kernel, get_bilateral_kernel_np, non_local_means
+from noise_filters import get_gaussian_kernel_py, get_bilateral_kernel_np, non_local_means
 from noise_filters_cython import get_bilateral_kernel_cython
 import numpy as np
 import time
@@ -27,7 +27,7 @@ def main():
     kernels_dict = {
         'MEAN FILTER': np.ones(shape=(kernel_len, kernel_len)) / (kernel_len * kernel_len),
 
-        'GAUSSIAN FILTER': get_gaussian_kernel(kernel_len, sigma),
+        'GAUSSIAN FILTER': get_gaussian_kernel_py(kernel_len, sigma),
 
         'NUMPY BILATERAL FILTER': {
             'func': get_bilateral_kernel_np,

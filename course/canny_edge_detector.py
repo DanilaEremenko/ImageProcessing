@@ -2,7 +2,7 @@ import numpy as np
 import os
 import cv2
 
-from lab3.noise_filters import get_gaussian_kernel
+from lab3.noise_filters import get_gaussian_kernel_py
 from lab2.convolve_filters import full_conv
 
 
@@ -111,7 +111,7 @@ class CannyEdgeDetector:
         return res_img
 
     def detect(self, img):
-        self.img_smoothed = full_conv(img, get_gaussian_kernel(self.kernel_size, self.sigma))
+        self.img_smoothed = full_conv(img, get_gaussian_kernel_py(self.kernel_size, self.sigma))
         self.grad_intens_matrix, self.grad_direct_matrix = self.sobel_filters(self.img_smoothed)
         self.non_max_img = self.non_max_suppression(self.grad_intens_matrix, self.grad_direct_matrix)
         self.threshold_img = self.threshold(self.non_max_img)
