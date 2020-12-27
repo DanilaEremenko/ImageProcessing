@@ -20,6 +20,7 @@ for key, value in compare_dict.items():
         compare_dict[key]['res'] = compare_dict[key]['func'](arr, kernel)
     print(f"{key} time = {time.time() - start_time}")
 
+print("-----COMPARE RESULTS--------")
 # round results for equal tests
 for key, value in compare_dict.items():
     for i in range(CALL_NUM):
