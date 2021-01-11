@@ -77,7 +77,6 @@ def convolve_and_show(img_arr, kernel=None, title=None, original_image=None):
     if original_image is not None:
         diff = np.sum(abs(original_image - res)) \
                / np.sum((np.ones(shape=res.shape) * 255))
-        diff = np.round(diff, 3)
     else:
         diff = None
 
@@ -87,5 +86,5 @@ def convolve_and_show(img_arr, kernel=None, title=None, original_image=None):
         if diff is None:
             plt.title(title)
         else:
-            plt.title(f"{title}\n diff = {diff}%")
+            plt.title("%s\n diff = %.3f" % (title, diff) + '%')
         plt.show()

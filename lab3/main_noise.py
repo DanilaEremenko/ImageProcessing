@@ -68,10 +68,10 @@ def main():
     start_time = time.time()
     res = non_local_means(
         noisy=img_noised,
-        bw_size=20,
-        sw_size=6,
+        bw_size=17,
+        sw_size=7,
         sigma=sigma,
-        h=67,
+        h=50,
         verbose=True
     )
     title = 'Non-local means'
