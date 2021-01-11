@@ -1,68 +1,30 @@
 import cv2
 import matplotlib.pyplot as plt
-import math
 
 
-def build_histogram(values, width, left, right):
+def draw_image(img_arr, title):
+    plt.imshow(img_arr, cmap='gray')
+    plt.title(title)
+    plt.show()
+
+
+def draw_hist(hist, title):
+    plt.plot(hist)
+    plt.title(title)
+    plt.show()
+
+
+def build_histogram(img_arr, width, left, right):
     result_hist = [0] * width
-    for line in values:
-        for element in line:
-            if element < left:
-                continue
-            if element > right:
-                continue
-            result_hist[element] += 1
+    for el in img_arr.flatten():
+        if left < el < right:
+            result_hist[el] += 1
     return result_hist
 
 
-def trim_percent(percent, original_hist):
-    left = 0
-    right = 255
-    total_space = sum(original_hist)
-    new_space = total_space
-    print(new_space / total_space)
-    while True:
-        left += 1
-        new_space = sum(original_hist[left:right])
-        print(new_space / total_space)
-        print(str(left) + " - " + str(right))
-        if new_space / total_space < 1.0 - percent:
-            return [left, right]
-        right -= 1
-        new_space = sum(original_hist[left:right])
-        print(new_space / total_space)
-        print(str(left) + " - " + str(right))
-        if new_space / total_space < 1.0 - percent:
-            return [left, right]
-
-
-def trim_percent2(percent, original_hist):
-    left = 0
-    right = 255
-    leftCut = sum(original_hist) * percent // 2
-    rightCut = leftCut
-    print(str(leftCut) + " - value to cut off from " + str(sum(original_hist)))
-    while leftCut > 0:
-        if original_hist[left] < leftCut:
-            leftCut -= original_hist[left]
-            original_hist[left] = 0
-            left += 1
-        else:
-            original_hist[left] -= leftCut
-            leftCut = 0
-    while rightCut > 0:
-        if original_hist[right] < rightCut:
-            rightCut -= original_hist[right]
-            original_hist[right] = 0
-            right -= 1
-        else:
-            original_hist[right] -= rightCut
-            rightCut = 0
-    print("new borders: " + str(left) + " - " + str(right))
-    return [left, right, original_hist]
-
-
-def build_change_matrix(width, a, b):
+def build_change_matrix(width, left, right):
+    a = left
+    b = right
     c = 0
     d = width
     result_matrix = [0] * width
@@ -71,40 +33,77 @@ def build_change_matrix(width, a, b):
     old_range = b - a
     range_multiplier = new_range / old_range
     for i in range(len(result_matrix)):
-        new_color = ((i - a) * range_multiplier + c) // 1
+        new_color = int((i - a) * range_multiplier + c)
         result_matrix[i] = max(min(new_color, 255), 0)
     return result_matrix
 
 
+def trim_part(part, hist, left=0, right=255):
+    res_hist = hist.copy()
+
+    left_cut = sum(res_hist) * part // 2
+    right_cut = left_cut
+
+    print(f"{left_cut} - value to cut off from {sum(res_hist)}")
+
+    while left_cut > 0:
+        if hist[left] < left_cut:
+            left_cut -= res_hist[left]
+            res_hist[left] = 0
+            left += 1
+        else:
+            res_hist[left] -= left_cut
+            left_cut = 0
+    while right_cut > 0:
+        if res_hist[right] < right_cut:
+            right_cut -= res_hist[right]
+            res_hist[right] = 0
+            right -= 1
+        else:
+            res_hist[right] -= right_cut
+            right_cut = 0
+    print("new borders: " + str(left) + " - " + str(right))
+    return left, right, res_hist
+
+
 def main():
-    originalImage = cv2.imread("images/test_dog.jpg")
-    image = cv2.cvtColor(originalImage, cv2.COLOR_BGR2GRAY)
-    cv2.imshow("Original", image)
+    image = cv2.cvtColor(cv2.imread("../dimages/test_dog.jpg"), cv2.COLOR_BGR2GRAY)
 
-    baseHistogram = build_histogram(image, 256, 0, 255)
-    base2 = baseHistogram
-    plt.plot(baseHistogram)
-    plt.show()
+    # show input
+    draw_image(image, 'source')
+    base_hist = build_histogram(
+        img_arr=image,
+        width=256,
+        left=0,
+        right=255
+    )
+    draw_hist(base_hist, 'base histogram')
 
-    test = trim_percent2(0.07, base2)
-    print(test[0:2])
-    trimmedTest = test[2]
-    plt.plot(trimmedTest)
-    plt.show()
+    # trim
+    left, right, trim_hist = trim_part(0.07, base_hist)
+    draw_hist(trim_hist, 'trim histogram')
 
-    transform_matrix = build_change_matrix(256, test[0], test[1])
-    # imageCopy = image
-    for i in range(len(image)):
-        for j in range(len(image[0])):
-            image[i][j] = transform_matrix[image[i][j]]
+    # transform
+    transform_matrix = build_change_matrix(
+        width=256,
+        left=left,
+        right=right
+    )
+    draw_hist(transform_matrix, 'transform matrix')
+    res_image = image.copy()
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            res_image[i][j] = transform_matrix[image[i][j]]
 
-    finalHistogram = build_histogram(image, 256, 0, 255)
-    plt.plot(finalHistogram)
-    plt.show()
-
-    cv2.imshow("Result", image)
-
-    cv2.waitKey(0)
+    # show results
+    draw_image(res_image, 'result')
+    final_hist = build_histogram(
+        img_arr=res_image,
+        width=256,
+        left=0,
+        right=255
+    )
+    draw_hist(final_hist, 'final histogram')
 
 
 if __name__ == '__main__':
