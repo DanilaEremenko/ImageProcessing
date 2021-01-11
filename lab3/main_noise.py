@@ -15,7 +15,11 @@ def get_gaussian_noise(mean, sigma, shape):
 
 
 def main():
-    img = cv2.cvtColor(cv2.imread('images/test_dog.jpg'), cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(cv2.imread('../dimages/test_dog.jpg'), cv2.COLOR_BGR2GRAY)
+    from PIL import Image
+    img = Image.fromarray(img)
+    img.thumbnail((512, 512))
+    img = np.asarray(img)
 
     sigma = int(0.02 * len(np.diag(img)))
 
@@ -64,11 +68,11 @@ def main():
     start_time = time.time()
     res = non_local_means(
         noisy=img_noised,
-        big_window_size=20,
-        small_window_size=6,
+        bw_size=20,
+        sw_size=6,
         sigma=sigma,
-        h=14,
-        verbose=False
+        h=67,
+        verbose=True
     )
     title = 'Non-local means'
     print(f"{title} time = {time.time() - start_time}")

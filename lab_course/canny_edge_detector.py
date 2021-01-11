@@ -139,18 +139,17 @@ if __name__ == '__main__':
         if show: plt.show()
 
 
-    dir = 'images/'
-    for img_name in os.listdir('images/'):
-        img_orig = cv2.cvtColor(cv2.imread(f"{dir}{img_name}"), cv2.COLOR_BGR2GRAY)
-        visualize(img_orig, img_name)
+    img_name = '../dimages/test_dog.jpg'
+    img_orig = cv2.cvtColor(cv2.imread(img_name), cv2.COLOR_BGR2GRAY)
+    visualize(img_orig, img_name)
 
-        detector.detect(np.array(img_orig, dtype='float64'))
-        visualize(detector.img_smoothed, '1: img smoothed')
-        visualize(detector.grad_intens_matrix, '2.1: gradient intensity matrix')
-        visualize(detector.grad_direct_matrix, '2.2: gradient direction matrix')
-        visualize(detector.non_max_img, '3: non maximum suppression')
-        visualize(detector.threshold_img, '4: threshold')
-        visualize(detector.hysteresis_img, '5: hysteresis(result)')
+    detector.detect(np.array(img_orig, dtype='float64'))
+    visualize(detector.img_smoothed, '1: img smoothed')
+    visualize(detector.grad_intens_matrix, '2.1: gradient intensity matrix')
+    visualize(detector.grad_direct_matrix, '2.2: gradient direction matrix')
+    visualize(detector.non_max_img, '3: non maximum suppression')
+    visualize(detector.threshold_img, '4: threshold')
+    visualize(detector.hysteresis_img, '5: hysteresis(result)')
 
-        # edges_cv = cv2.Canny(np.array(img_orig, dtype='uint8'), 75, 150)
-        # visualize(edges_cv, 'Opencv Edges')
+    # edges_cv = cv2.Canny(np.array(img_orig, dtype='uint8'), 75, 150)
+    # visualize(edges_cv, 'Opencv Edges')

@@ -4,7 +4,7 @@ from convolve_filters import convolve_and_show
 
 
 def main():
-    img = cv2.cvtColor(cv2.imread('images/boundaries_yum.jpg'), cv2.COLOR_BGR2GRAY)
+    img = cv2.cvtColor(cv2.imread('../dimages/boundaries_yum.jpg'), cv2.COLOR_BGR2GRAY)
 
     kernels_dict = {
 
