@@ -91,14 +91,13 @@ def get_gaussian_kernel_py(kernel_len, sigma):
 ######################################################################
 # -------------------- NON-LOCAL MEANS -------------------------------
 ######################################################################
-def non_local_means(noisy, big_window_size, small_window_size, sigma, h, verbose=True):
-    padwidth = big_window_size // 2
-    extd_img = np.pad(noisy, ((padwidth, padwidth), (padwidth, padwidth)), mode='reflect')
+def non_local_means(noisy, bw_size, sw_size, sigma, h, verbose=True):
+    extd_img = np.pad(noisy, bw_size, mode='reflect')
     return non_local_means_numba(
-        noisy=noisy,
+        src_shape=noisy.shape,
         extd_img=extd_img,
-        big_window_size=big_window_size,
-        small_window_size=small_window_size,
+        bw_size=bw_size,
+        sw_size=sw_size,
         sigma=sigma,
         h=h,
         verbose=verbose
@@ -106,63 +105,38 @@ def non_local_means(noisy, big_window_size, small_window_size, sigma, h, verbose
 
 
 @jit(nopython=True)
-def non_local_means_numba(noisy, extd_img, big_window_size, small_window_size, sigma, h, verbose=True):
-    """
-    Performs the non-local-means algorithm given a noisy image.
-    params is a tuple with:
-    params = (big_window_size, small_window_size, h)
-    Please keep big_window_size and small_window_size as even numbers
-    """
+def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbose=True):
+    output_image = np.zeros((src_shape[0], src_shape[1]))
+    extd_h, extd_w = extd_img.shape
 
-    pad_width = big_window_size // 2
-    img = noisy.copy()
-    # ----------------------------------------------------------------------
-    # ---------------- image extending yo bitch ----------------------------
-    # ----------------------------------------------------------------------
-    iterator = 0
-    total_iterations = img.shape[1] * img.shape[0] * (big_window_size - small_window_size) ** 2
-
-    if verbose: print("TOTAL ITERATIONS = ", total_iterations)
-
-    output_image = extd_img.copy()  # TODO why not noisy
-    small_center = small_window_size // 2
-
-    # For each pixel in the source image, find a area around the pixel that needs to be compared
-    for image_x in range(pad_width, pad_width + img.shape[1]):
-        for image_y in range(pad_width, pad_width + img.shape[0]):
-
-            b_win_x = image_x - pad_width
-            b_win_y = image_y - pad_width
-
-            # comparison neighbourhood
-            comp_nbhd = extd_img[image_y - small_center:image_y + small_center + 1,
-                        image_x - small_center:image_x + small_center + 1]
-
+    total_iterations = src_shape[0] * src_shape[1] * (2 * bw_size - sw_size) ** 2
+    i = 0
+    # big cycle
+    for y in range(bw_size, extd_h - bw_size):
+        for x in range(bw_size, extd_w - bw_size):
+            # calculate weight using difference between neighbours
+            comp_nbhd = extd_img[y:y + sw_size, x:x + sw_size]
             pixel_color = 0
             total_weight = 0
+            for ypix in range(y - bw_size, y + bw_size - sw_size):
+                for xpix in range(x - bw_size, x + bw_size - sw_size):
+                    # создаем для текущего пикселя окна для рассчета gauss - L2 norm
+                    curr_nbhd = extd_img[ypix:ypix + sw_size, xpix:xpix + sw_size]
 
-            # For each comparison neighbourhood, search for all small windows within a large box, and compute their weights
-            for s_win_x in range(b_win_x, b_win_x + big_window_size - small_window_size, 1):
-                for s_win_y in range(b_win_y, b_win_y + big_window_size - small_window_size, 1):
-
-                    # find the small box
-                    curr_nbhd = extd_img[s_win_y:s_win_y + small_window_size + 1,
-                                s_win_x:s_win_x + small_window_size + 1]
-
-                    # weight is computed as a weighted softmax over the euclidean distances
+                    # подсчет весов для текущего пикселя
                     distance = math.sqrt(np.sum(np.square(curr_nbhd - comp_nbhd)))
                     weight = math.exp(-(distance ** 2 - 2 * sigma ** 2) / h ** 2)
                     total_weight += weight
-                    pixel_color += weight * extd_img[s_win_y + small_center, s_win_x + small_center]
+                    pixel_color += weight * extd_img[ypix, xpix]
 
                     # verbose part
-                    iterator += 1
+                    i += 1
                     if verbose:
-                        percent_complete = iterator * 100 / total_iterations
+                        percent_complete = i / total_iterations * 100
                         if percent_complete % 5 == 0:
                             print('% COMPLETE = ', percent_complete)
 
-            pixel_color /= total_weight
-            output_image[image_y, image_x] = pixel_color
+            # обновляем изображения с учетом нового веса
+            output_image[y - bw_size, x - bw_size] = pixel_color / total_weight
 
-    return output_image[pad_width:pad_width + img.shape[0], pad_width:pad_width + img.shape[1]]
+    return output_image
