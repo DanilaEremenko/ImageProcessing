@@ -50,13 +50,13 @@ def main():
         for j in range(len(image[0])):
             res_image[i][j] = transform_matrix[image[i][j]]
 
-    final_hist = build_histogram(image, 256)
+    final_hist = build_histogram(res_image, 256)
     draw_hist(final_hist, 'final histogram')
 
     final_cumul = build_cumulative(final_hist)
     draw_hist(final_cumul, 'final cumulative')
 
-    draw_image(image, 'result image')
+    draw_image(res_image, 'result image')
 
 
 if __name__ == '__main__':
