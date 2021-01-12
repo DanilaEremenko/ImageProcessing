@@ -66,10 +66,12 @@ def draw_hist(hist, title):
 
 def main():
     img = cv2.imread("../dimages/boundaries_yum.jpg", 0)
+    draw_image(img, 'Source image')
 
     # бинаризация
     _, binary = cv2.threshold(img, 128, 255, cv2.THRESH_BINARY)
     A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(img.shape)
+    draw_image(A, 'Binary inverted image')
 
     window_shape = 9
     B = np.ones(shape=(window_shape, window_shape), dtype=np.uint8) * 255
