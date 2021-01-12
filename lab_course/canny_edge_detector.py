@@ -31,8 +31,8 @@ class CannyEdgeDetector:
                                      [0, 0, 0],
                                      [-1, -2, -1]], np.float32)
 
-        conv_vertical = full_conv(img_arr=img, kernel_data=sobel_vertical)
-        conv_horizontal = full_conv(img_arr=img, kernel_data=sobel_horizontal)
+        conv_vertical = full_conv(img_arr=img, kernel=sobel_vertical)
+        conv_horizontal = full_conv(img_arr=img, kernel=sobel_horizontal)
         grad_matrix = np.sqrt(np.square(conv_vertical) + np.square(conv_horizontal))
         grad_matrix = grad_matrix / grad_matrix.max() * 255
         theta = np.arctan2(conv_horizontal, conv_vertical)

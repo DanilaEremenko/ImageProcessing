@@ -18,73 +18,58 @@ def conv_np(arr, kernel):
     return np.sum(np.multiply(arr, kernel))
 
 
-def full_conv(img_arr, kernel_data, conv_func=conv_py):
-    # adaptive kernels mode
-    if type(kernel_data) is dict:
-        adaptive_mode = True
-        kernel = np.zeros(kernel_data['shape'])
-    # default mode
-    elif type(kernel_data) is np.ndarray:
-        adaptive_mode = False
-        kernel = kernel_data
-    else:
-        raise Exception('Unexpected kernel data ' + str(type(kernel_data)))
+def exapand_img(img_arr, kernel_shape):
+    return np.pad(img_arr, kernel_shape[0] // 2, mode='reflect')
 
+
+def full_adaptive_conv(img_arr, kernel_data, kernel_args, conv_func=conv_py):
     # expand
-    if len(kernel) > 2:
-        if not all([dim % 2 == 1 for dim in kernel.shape]):
-            raise Exception('All kernel dims should be an odd')
-
-        expand_len = int(len(kernel) // 2)
-        expanded_arr = img_arr
-
-        for i in range(expand_len):
-            expanded_arr = np.concatenate((expanded_arr[0][np.newaxis], expanded_arr), axis=0)
-            expanded_arr = np.concatenate((expanded_arr[:, 0][:, np.newaxis], expanded_arr), axis=1)
-            expanded_arr = np.concatenate((expanded_arr, expanded_arr[-1][np.newaxis]), axis=0)
-            expanded_arr = np.concatenate((expanded_arr, expanded_arr[:, -1][:, np.newaxis]), axis=1)
-
-    else:
-        expand_len = 0
-        expanded_arr = img_arr
+    if kernel_data['shape'][0] > 2 and not all([dim % 2 == 1 for dim in kernel_data['shape']]):
+        raise Exception('All kernel dims should be an odd')
+    exp_img = exapand_img(img_arr, kernel_data['shape'])
 
     # convolve
     res = np.zeros(img_arr.shape)
-    for x in range(0, expanded_arr.shape[0] - kernel.shape[0] + 1):
-        for y in range(0, expanded_arr.shape[1] - kernel.shape[1] + 1):
-            if adaptive_mode:
-                kernel = kernel_data['func'](
-                    expanded_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
-                    **kernel_data['args']
-                )
+    for x in range(img_arr.shape[0]):
+        for y in range(img_arr.shape[1]):
+            kernel = kernel_data['func'](
+                exp_img[x:x + kernel_data['shape'][0], y:y + kernel_data['shape'][0]],
+                **kernel_args
+            )
 
             res[x][y] = conv_func(
-                arr=expanded_arr[x:x + kernel.shape[0], y:y + kernel.shape[1]],
+                arr=exp_img[x:x + kernel.shape[0], y:y + kernel.shape[1]],
                 kernel=kernel
             )
 
     return res
 
 
-def convolve_and_show(img_arr, kernel=None, title=None, original_image=None):
-    # make convolution
-    if kernel is not None:
-        res = full_conv(img_arr, kernel)
-    else:
-        res = img_arr
+def full_conv(img_arr, kernel, conv_func=conv_py):
+    # expand
+    if kernel.shape[0] > 2 and not all([dim % 2 == 1 for dim in kernel.shape]):
+        raise Exception('All kernel dims should be an odd')
+    exp_img = exapand_img(img_arr, kernel.shape)
 
-    # calculate difference between images
-    if original_image is not None:
-        diff = np.sum(abs(original_image - res)) \
-               / np.sum((np.ones(shape=res.shape) * 255))
-    else:
-        diff = None
+    # convolve
+    res = np.zeros(img_arr.shape)
+    for x in range(img_arr.shape[0]):
+        for y in range(img_arr.shape[1]):
+            res[x][y] = conv_func(
+                arr=exp_img[x:x + kernel.shape[0], y:y + kernel.shape[1]],
+                kernel=kernel
+            )
 
+    return res
+
+
+def calculate_diff(orig_img, comp_img):
+    return np.mean((orig_img - comp_img) ** 2)
+
+
+def draw_image(img_arr, title):
     # plot results
     if title is not None:
-        plt.imshow(res, cmap='gray')
-        if diff is None:
-            plt.title(title)
-        else:
-            plt.title("%s\n diff = %.3f" % (title, diff) + '%')
+        plt.imshow(img_arr, cmap='gray')
+        plt.title(title)
         plt.show()

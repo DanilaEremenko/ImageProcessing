@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from convolve_filters import convolve_and_show
+from convolve_filters import draw_image, full_conv
 
 
 def main():
@@ -8,39 +8,42 @@ def main():
 
     kernels_dict = {
 
-        'ROBERTS LEFT': np.array([[1, 0],
-                                  [0, -1]]),
-
-        'ROBERTS RIGHT': np.array([[0, 1],
-                                   [-1, 0]]),
-
-        'SOBEL HORIZONTAL': np.array([[-1, -2, -1],
-                                      [0, 0, 0],
-                                      [1, 2, 1]]),
-
-        'SOBEL VERTICAL': np.array([[-1, 0, 1],
-                                    [-2, 0, 2],
-                                    [-1, 0, 1]]),
-
-        'PREWITT HORIZONTAL': np.array([[-1, -1, -1],
-                                        [0, 0, 0],
-                                        [1, 1, 1]]),
-
-        'PREWITT VERTICAL': np.array([[-1, 0, 1],
-                                      [-1, 0, 1],
-                                      [-1, 0, 1]]),
-
+        'ROBERTS LEFT': {
+            'kernel': np.array([[1, 0],
+                                [0, -1]]),
+        },
+        'ROBERTS RIGHT': {
+            'kernel': np.array([[0, 1],
+                                [-1, 0]]),
+        },
+        'SOBEL HORIZONTAL': {
+            'kernel': np.array([[-1, -2, -1],
+                                [0, 0, 0],
+                                [1, 2, 1]]),
+        },
+        'SOBEL VERTICAL': {
+            'kernel': np.array([[-1, 0, 1],
+                                [-2, 0, 2],
+                                [-1, 0, 1]]),
+        },
+        'PREWITT HORIZONTAL': {
+            'kernel': np.array([[-1, -1, -1],
+                                [0, 0, 0],
+                                [1, 1, 1]]),
+        },
+        'PREWITT VERTICAL': {
+            'kernel': np.array([[-1, 0, 1],
+                                [-1, 0, 1],
+                                [-1, 0, 1]]),
+        }
     }
 
     # ----------------------- RUNING --------------------------------------
-    convolve_and_show(img, title='ORIGINAL IMAGE')
+    draw_image(img, title='ORIGINAL IMAGE')
 
-    for title, kernel in kernels_dict.items():
-        convolve_and_show(
-            img_arr=img,
-            kernel=kernel,
-            title=title
-        )
+    for title, kernel_data in kernels_dict.items():
+        res_img = full_conv(img, kernel_data['kernel'])
+        draw_image(res_img, title)
 
 
 if __name__ == '__main__':
