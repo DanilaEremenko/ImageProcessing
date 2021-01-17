@@ -91,7 +91,7 @@ def get_gaussian_kernel_py(kernel_len, sigma):
 ######################################################################
 # -------------------- NON-LOCAL MEANS -------------------------------
 ######################################################################
-def non_local_means(noisy, bw_size, sw_size, sigma, verbose=True):
+def non_local_means(noisy, bw_size, sw_size, sigma, h, verbose=True):
     extd_img = np.pad(noisy, bw_size, mode='reflect')
     return non_local_means_numba(
         src_shape=noisy.shape,
@@ -99,18 +99,19 @@ def non_local_means(noisy, bw_size, sw_size, sigma, verbose=True):
         bw_size=bw_size,
         sw_size=sw_size,
         sigma=sigma,
+        h=h,
         verbose=verbose
     )
 
 
 @jit(nopython=True)
-def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, verbose=True):
+def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbose=True):
     output_image = np.zeros((src_shape[0], src_shape[1]))
     extd_h, extd_w = extd_img.shape
 
     total_iterations = src_shape[0] * src_shape[1] * (2 * bw_size - sw_size) ** 2
     i = 0
-    h = 1
+    Ga = get_gaussian_kernel_py(sw_size, sigma)
     # big cycle
     for y in range(bw_size, extd_h - bw_size):
         for x in range(bw_size, extd_w - bw_size):
@@ -118,16 +119,17 @@ def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, verbose=
             comp_nbhd = extd_img[y:y + sw_size, x:x + sw_size]
             pixel_color = 0
             total_weight = 0
-            for ypix in range(y - bw_size, y + bw_size - sw_size):
-                for xpix in range(x - bw_size, x + bw_size - sw_size):
+            for ynbh in range(y - bw_size, y + bw_size - sw_size):
+                for xnbh in range(x - bw_size, x + bw_size - sw_size):
                     # создаем для текущего пикселя окна для рассчета gauss - L2 norm
-                    curr_nbhd = extd_img[ypix:ypix + sw_size, xpix:xpix + sw_size]
+                    curr_nbhd = extd_img[ynbh:ynbh + sw_size, xnbh:xnbh + sw_size]
 
                     # подсчет весов для текущего пикселя
-                    distance = math.sqrt(np.sum((curr_nbhd - comp_nbhd) ** 2))
-                    weight = math.exp(-(max(distance ** 2 - 2 * sigma ** 2, 0.0) / h ** 2))
+                    distance_mat = (curr_nbhd - comp_nbhd) ** 2
+                    gauss_dist = np.sum(Ga * distance_mat)
+                    weight = math.exp(-(gauss_dist / (h ** 2)))
                     total_weight += weight
-                    pixel_color += weight * extd_img[ypix, xpix]
+                    pixel_color += weight * extd_img[ynbh, xnbh]
 
                     # verbose part
                     i += 1
