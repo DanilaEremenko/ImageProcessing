@@ -24,8 +24,6 @@ def exapand_img(img_arr, kernel_shape):
 
 def full_adaptive_conv(img_arr, kernel_data, kernel_args, conv_func=conv_py):
     # expand
-    if kernel_data['shape'][0] > 2 and not all([dim % 2 == 1 for dim in kernel_data['shape']]):
-        raise Exception('All kernel dims should be an odd')
     exp_img = exapand_img(img_arr, kernel_data['shape'])
 
     # convolve
@@ -47,8 +45,6 @@ def full_adaptive_conv(img_arr, kernel_data, kernel_args, conv_func=conv_py):
 
 def full_conv(img_arr, kernel, conv_func=conv_py):
     # expand
-    if kernel.shape[0] > 2 and not all([dim % 2 == 1 for dim in kernel.shape]):
-        raise Exception('All kernel dims should be an odd')
     exp_img = exapand_img(img_arr, kernel.shape)
 
     # convolve
