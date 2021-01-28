@@ -28,7 +28,7 @@ def get_mean_results(kernel_len, orig_img, noised_img):
 
 
 def mean_min_func(args, name, orig_img, noised_img, history):
-    kernel_len = args
+    kernel_len = args[0]
     kernel_len = int(kernel_len)
 
     res_img, diff = get_mean_results(kernel_len=kernel_len, orig_img=orig_img, noised_img=noised_img)
@@ -105,7 +105,8 @@ def get_nlm_results(sigma, h, orig_img, noised_img):
 
 
 def nlm_min_func(args, name, orig_img, noised_img, history):
-    sigma, h = args
+    sigma = args[0]
+    h = 10
     res_img, diff = get_nlm_results(sigma=sigma, h=h, orig_img=orig_img, noised_img=noised_img)
 
     print(f"{len(history['loss']) + 1}.{name}: {diff}")
@@ -172,7 +173,7 @@ def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
             f=hyper_data['func'],
             x0=np.array(list(hyper_data['args'].values())),
             args=(*hyper_data['extra_args'], hyper_data['history']),
-            maxiter=1
+            maxiter=eval_num
         )
         hyper_data['history']['name'] = [name] * (len(hyper_data['history']['loss']))
 
@@ -183,13 +184,13 @@ def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
     return res_df
 
 
-def get_nlm_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
+def get_nlm_df(orig_img, noised_img, sigma_bounds, eval_num):
     #######################################################
     # ----------------- NLM -------------------------------
     #######################################################
     hyper_data = {
         'func': nlm_min_func,
-        'args': {'sigma': sigma_bounds[0], 'h': sigma_bounds[0]},
+        'args': {'sigma': sigma_bounds[0]},
         'extra_args': ('NLM-FILTER', orig_img, noised_img),
         'history': {'name': [], 'loss': [], 'args': []}
     }
@@ -198,7 +199,7 @@ def get_nlm_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
         f=hyper_data['func'],
         x0=np.array(list(hyper_data['args'].values())),
         args=(*hyper_data['extra_args'], hyper_data['history']),
-        maxiter=1
+        maxiter=eval_num
     )
     hyper_data['history']['name'] = [name] * (len(hyper_data['history']['loss']))
 
@@ -240,9 +241,8 @@ def main():
         get_nlm_df(
             orig_img=orig_img,
             noised_img=noised_img,
-            kernel_bounds=(3, 9),
             sigma_bounds=(1, 50),
-            eval_num=1
+            eval_num=None
         )
     ],
         sort=True
@@ -253,3 +253,4 @@ def main():
 if __name__ == '__main__':
     res_df = main()
     res_df.to_pickle('noise.pkl')
+    # res_df = pd.read_pickle('noise.pkl')
