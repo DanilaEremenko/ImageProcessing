@@ -16,7 +16,7 @@ def draw_hist(ax, hist, title, x_lim=None, y_lim=None):
         ax.set_ylim(None, y_lim)
 
 
-def draw_images(imgs, hists, titles, show=True, save_path=None):
+def draw_images_and_hists(imgs, hists, titles, show=True, save_path=None):
     assert len(imgs) == len(hists)
     fig, axes = plt.subplots(len(hists), 2, figsize=(15, 15))
     plt.subplots_adjust(wspace=0.1, hspace=0.2)
@@ -24,6 +24,20 @@ def draw_images(imgs, hists, titles, show=True, save_path=None):
     for i, (img, hist, title) in enumerate(zip(imgs, hists, titles)):
         draw_image(ax=axes[i, 0], img_arr=img, title=f"{title} image")
         draw_hist(ax=axes[i, 1], hist=hist, y_lim=hist_y_lim, title=f"{title} histogram")
+
+    if type(save_path) == str:
+        plt.savefig(save_path, dpi=300)
+    if show:
+        fig.show()
+
+
+def draw_images(imgs, titles, show=True, save_path=None):
+    assert len(imgs) == len(titles)
+    fig, axes = plt.subplots(len(imgs), 1, figsize=(15, 15))
+    plt.subplots_adjust(wspace=0.1, hspace=0.2)
+
+    for i, (img, title) in enumerate(zip(imgs, titles)):
+        draw_image(ax=axes[i], img_arr=img, title=title)
 
     if type(save_path) == str:
         plt.savefig(save_path, dpi=300)

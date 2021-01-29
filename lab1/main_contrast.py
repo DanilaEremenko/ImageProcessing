@@ -2,8 +2,8 @@ import cv2
 
 import lib_trim
 import lib_equal
-from plot_part import draw_images
 import numpy as np
+from lib.plot_part import draw_images_and_hists
 
 
 def build_histogram(img_arr, width):
@@ -58,7 +58,7 @@ def main(img_path, save_path, trim_part):
     ###########################################################################
     # -------------------------- DRAW RESULTS ---------------------------------
     ###########################################################################
-    draw_images(
+    draw_images_and_hists(
         imgs=[src_image, res_trim_image, res_eq_image],
         hists=[src_hist, final_trim_hist, final_eq_hist],
         titles=['src trim', 'final trim', 'final eq'],

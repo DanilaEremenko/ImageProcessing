@@ -61,11 +61,3 @@ def full_conv(img_arr, kernel, conv_func=conv_py):
 
 def calculate_diff(orig_img, comp_img):
     return np.mean((orig_img - comp_img) ** 2)
-
-
-def draw_image(img_arr, title):
-    # plot results
-    if title is not None:
-        plt.imshow(img_arr, cmap='gray')
-        plt.title(title)
-        plt.show()

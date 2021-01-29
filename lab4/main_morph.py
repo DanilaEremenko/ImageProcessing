@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+from lib.plot_part import draw_images
 
 
 # делитация
@@ -50,25 +50,6 @@ def opening(A, B):
 # закрытие
 def closing(A, B):
     return erosion(dilation(A, B), B)
-
-
-def draw_image(ax, img_arr, title):
-    ax.imshow(img_arr, cmap='gray')
-    ax.set_title(title)
-
-
-def draw_images(imgs, titles, show=True, save_path=None):
-    assert len(imgs) == len(titles)
-    fig, axes = plt.subplots(len(imgs), 1, figsize=(15, 15))
-    plt.subplots_adjust(wspace=0.1, hspace=0.2)
-
-    for i, (img, title) in enumerate(zip(imgs, titles)):
-        draw_image(ax=axes[i], img_arr=img, title=f"{title} image")
-
-    if type(save_path) == str:
-        plt.savefig(save_path, dpi=300)
-    if show:
-        fig.show()
 
 
 def main(img_path):

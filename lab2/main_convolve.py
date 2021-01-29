@@ -1,10 +1,11 @@
 import cv2
 import numpy as np
-from convolve_filters import draw_image, full_conv
+from convolve_filters import full_conv
+from lib.plot_part import draw_images
 
 
-def main():
-    img = cv2.cvtColor(cv2.imread('../dimages/boundaries_yum.jpg'), cv2.COLOR_BGR2GRAY)
+def main(img_path):
+    img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2GRAY)
 
     kernels_dict = {
 
@@ -39,12 +40,18 @@ def main():
     }
 
     # ----------------------- RUNING --------------------------------------
-    draw_image(img, title='ORIGINAL IMAGE')
-
+    res_dict = {'src': img}
     for title, kernel_data in kernels_dict.items():
-        res_img = full_conv(img, kernel_data['kernel'])
-        draw_image(res_img, title)
+        res = full_conv(img, kernel_data['kernel'])
+        _, res_dict[title] = cv2.threshold(res, 128, 255, cv2.THRESH_BINARY)
+
+    draw_images(
+        imgs=list(res_dict.values()),
+        titles=list(res_dict.keys()),
+        show=True
+    )
 
 
 if __name__ == '__main__':
-    main()
+    main(img_path='../dimages/boundaries_yum.jpg')
+    main(img_path='../dimages/test_dog.jpg')
