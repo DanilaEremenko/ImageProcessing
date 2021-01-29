@@ -52,42 +52,49 @@ def closing(A, B):
     return erosion(dilation(A, B), B)
 
 
-def draw_image(img_arr, title):
-    plt.imshow(img_arr, cmap='gray')
-    plt.title(title)
-    plt.show()
+def draw_image(ax, img_arr, title):
+    ax.imshow(img_arr, cmap='gray')
+    ax.set_title(title)
 
 
-def draw_hist(hist, title):
-    plt.plot(hist)
-    plt.title(title)
-    plt.show()
+def draw_images(imgs, titles, show=True, save_path=None):
+    assert len(imgs) == len(titles)
+    fig, axes = plt.subplots(len(imgs), 1, figsize=(15, 15))
+    plt.subplots_adjust(wspace=0.1, hspace=0.2)
+
+    for i, (img, title) in enumerate(zip(imgs, titles)):
+        draw_image(ax=axes[i], img_arr=img, title=f"{title} image")
+
+    if type(save_path) == str:
+        plt.savefig(save_path, dpi=300)
+    if show:
+        fig.show()
 
 
-def main():
-    img = cv2.imread("../dimages/boundaries_yum.jpg", 0)
-    draw_image(img, 'Source image')
+def main(img_path):
+    src_img = cv2.imread(img_path, 0)
 
     # бинаризация
-    _, binary = cv2.threshold(img, 128, 255, cv2.THRESH_BINARY)
-    A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(img.shape)
-    draw_image(A, 'Binary inverted image')
+    _, binary = cv2.threshold(src_img, 128, 255, cv2.THRESH_BINARY)
+    A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(src_img.shape)
 
     window_shape = 9
     B = np.ones(shape=(window_shape, window_shape), dtype=np.uint8) * 255
 
     img_dilation = dilation(A, B)
-    draw_image(img_dilation, 'Dilation')
 
     img_erosion = erosion(A, B)
-    draw_image(img_erosion, 'Erosion')
 
     img_opening = opening(A, B)
-    draw_image(img_opening, 'Opening')
 
     img_closing = closing(A, B)
-    draw_image(img_closing, 'Closing')
+
+    draw_images(
+        imgs=[A, img_dilation, img_erosion, img_opening, img_closing],
+        titles=['src', 'dilation', 'erosion', 'opening', 'closing'],
+        show=True
+    )
 
 
 if __name__ == '__main__':
-    main()
+    main(img_path="../dimages/boundaries_yum.jpg")
