@@ -1,63 +1,61 @@
 import cv2
 import numpy as np
-from lib.plot_part import draw_images
+from lib.plot_part import draw_images, show_image
 
 
-# делитация
-def dilation(A, B):
+def dilation(A, B, strong_pix=255):
     B_h, B_w = B.shape
     A_h, A_w = A.shape
     res_dilation = A.copy()
-    target_row, target_col = np.where(A == 255)
-    # для каждого пикселя ищем пересечение
-    for ai, aj in zip(target_row, target_col):
+    strong_ids = np.where(A == strong_pix)
+    # A = B
+    for ai, aj in zip(*strong_ids):
         for bi in range(B_h):
             for bj in range(B_w):
-                checking_row = ai + bi - B_h // 2
-                checking_col = aj + bj - B_w // 2
-                if 0 <= checking_row <= A_h - 1 and 0 <= checking_col <= A_w - 1:
+                neigh_row = ai + bi - B_h // 2
+                neigh_col = aj + bj - B_w // 2
+                if 0 <= neigh_row < A_h and 0 <= neigh_col < A_w:
                     # якорная точка
-                    res_dilation[checking_row][checking_col] = B[bi][bj]
+                    res_dilation[neigh_row][neigh_col] = B[bi][bj]
     return res_dilation
 
 
-# эрозия
-def erosion(A, B):
+def erosion(A, B, strong_pix=255, weak_pix=0):
     B_h, B_w = B.shape
     A_h, A_w = A.shape
     res_erosion = A.copy()
-    target_row, target_col = np.where(A == 255)
-    # ищем все смещения, где B полностью входит в A
-    for ai, aj in zip(target_row, target_col):
+    strong_ids = np.where(A == strong_pix)
+    # found where B in A
+    for ai, aj in zip(*strong_ids):
         for bi in range(B_h):
             for bj in range(B_w):
-                checking_row = ai + bi - B_h // 2
-                checking_col = aj + bj - B_w // 2
-                if 0 <= checking_row <= A_h - 1 and 0 <= checking_col <= A_w - 1:
-                    # если B не является подмножеством A, то точка равна 0
-                    if A[checking_row][checking_col] != B[bi][bj]:
-                        res_erosion[ai][aj] = 0
+                neigh_row = ai + bi - B_h // 2
+                neigh_col = aj + bj - B_w // 2
+                if 0 <= neigh_row < A_h and 0 <= neigh_col < A_w:
+                    # curr_B not in A -> pix = weak_pix
+                    if A[neigh_row][neigh_col] != B[bi][bj]:
+                        res_erosion[ai][aj] = weak_pix
+                        break
                 else:
-                    res_erosion[ai][aj] = 0
+                    res_erosion[ai][aj] = weak_pix
     return res_erosion
 
 
-# открытие
 def opening(A, B):
     return dilation(erosion(A, B), B)
 
 
-# закрытие
 def closing(A, B):
     return erosion(dilation(A, B), B)
 
 
-def main(img_path):
+def main(img_path, save_path=None):
     src_img = cv2.imread(img_path, 0)
 
     # бинаризация
     _, binary = cv2.threshold(src_img, 128, 255, cv2.THRESH_BINARY)
     A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(src_img.shape)
+    show_image(A, 'SRC IMAGE')
 
     window_shape = 9
     B = np.ones(shape=(window_shape, window_shape), dtype=np.uint8) * 255
@@ -71,11 +69,13 @@ def main(img_path):
     img_closing = closing(A, B)
 
     draw_images(
-        imgs=[A, img_dilation, img_erosion, img_opening, img_closing],
-        titles=['src', 'dilation', 'erosion', 'opening', 'closing'],
-        show=True
+        imgs=[img_dilation, img_erosion, img_opening, img_closing],
+        titles=['DILATION', 'EROSION', 'OPENING', 'CLOSING'],
+        plt_shape=(2, 2),
+        show=True,
+        save_path=save_path
     )
 
 
 if __name__ == '__main__':
-    main(img_path="../dimages/boundaries_yum.jpg")
+    main(img_path="../dimages/boundaries_yum.jpg", save_path='morph_boundaries_yum.jpg')
