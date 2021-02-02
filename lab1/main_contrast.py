@@ -69,3 +69,4 @@ def main(img_path, save_path, trim_part):
 if __name__ == '__main__':
     main(img_path="../dimages/test_dog.jpg", save_path='contrast_test_dog.png', trim_part=0.10)
     main(img_path="../dimages/new_york.webp", save_path='contrast_new_york.png', trim_part=0.10)
+    main(img_path="../dimages/bad_brightness.jpeg", save_path='contrast_bad_brightness.png', trim_part=0.10)
