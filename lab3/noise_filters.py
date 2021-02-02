@@ -111,8 +111,8 @@ def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbo
 
     total_iterations = src_shape[0] * src_shape[1] * (2 * bw_size - sw_size) ** 2
     i = 0
-    Ga = get_gaussian_kernel_py(sw_size, sigma)
     # big cycle
+    h = 0.5 * sigma
     for y in range(bw_size, extd_h - bw_size):
         for x in range(bw_size, extd_w - bw_size):
             # calculate weight using difference between neighbours
@@ -121,13 +121,16 @@ def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbo
             total_weight = 0
             for ynbh in range(y - bw_size, y + bw_size - sw_size):
                 for xnbh in range(x - bw_size, x + bw_size - sw_size):
-                    # создаем для текущего пикселя окна для рассчета gauss - L2 norm
+                    # select curr neighbor
                     curr_nbhd = extd_img[ynbh:ynbh + sw_size, xnbh:xnbh + sw_size]
 
-                    # подсчет весов для текущего пикселя
-                    distance_mat = (curr_nbhd - comp_nbhd) ** 2
-                    gauss_dist = np.sum(Ga * distance_mat)
-                    weight = math.exp(-(gauss_dist / (h ** 2)))
+                    # current weight calculating
+                    distance_mat = 0.0
+                    for pix1, pix2 in zip(curr_nbhd.flatten(), comp_nbhd.flatten()):
+                        distance_mat += (pix1 - pix2) ** 2
+                    distance_mat = math.sqrt(distance_mat)
+
+                    weight = math.exp(-((max(distance_mat - 2 * sigma ** 2, 0.0)) / (h ** 2)))
                     total_weight += weight
                     pixel_color += weight * extd_img[ynbh, xnbh]
 
@@ -138,7 +141,7 @@ def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbo
                         if percent_complete % 5 == 0:
                             print('% COMPLETE = ', percent_complete)
 
-            # обновляем изображения с учетом нового веса
+            # actually update pixel
             output_image[y - bw_size, x - bw_size] = pixel_color / total_weight
 
     return output_image

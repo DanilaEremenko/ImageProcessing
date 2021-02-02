@@ -110,8 +110,8 @@ def bilateral_min_func(args, name, orig_img, noised_img, history):
 def get_nlm_results(sigma, h, orig_img, noised_img):
     res_img = non_local_means(
         noisy=noised_img,
-        bw_size=17,
-        sw_size=7,
+        bw_size=30,
+        sw_size=5,
         h=h,
         sigma=sigma,
         verbose=False
@@ -161,7 +161,7 @@ def get_img_from_name(name, orig_img, noised_img, args):
     return res_img
 
 
-def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
+def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_start, eval_num):
     #######################################################
     # ----------------- SIMPLE FILTERS --------------------
     #######################################################
@@ -174,13 +174,13 @@ def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
         },
         'GAUSSIAN FILTER': {
             'func': gaussian_min_func,
-            'args': {'sigma': sigma_bounds[0], 'kernel_len': kernel_bounds[0]},
+            'args': {'sigma': sigma_start, 'kernel_len': kernel_bounds[0]},
             'extra_args': ('GAUSSIAN FILTER', orig_img, noised_img),
             'history': {'name': [], 'args': [], 'loss': []}
         },
         'PYTHON BILATERAL FILTER': {
             'func': bilateral_min_func,
-            'args': {'sigma_i': sigma_bounds[0], 'sigma_s': sigma_bounds[0], 'kernel_len': kernel_bounds[0]},
+            'args': {'sigma_i': sigma_start, 'sigma_s': sigma_start, 'kernel_len': kernel_bounds[0]},
             'extra_args': ('PYTHON BILATERAL FILTER', orig_img, noised_img),
             'history': {'name': [], 'loss': [], 'args': []}
         }
@@ -203,13 +203,13 @@ def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_bounds, eval_num):
     return res_df
 
 
-def get_nlm_df(orig_img, noised_img, sigma_bounds, eval_num):
+def get_nlm_df(orig_img, noised_img, sigma_start, eval_num):
     #######################################################
     # ----------------- NLM -------------------------------
     #######################################################
     hyper_data = {
         'func': nlm_min_func,
-        'args': {'sigma': sigma_bounds[0]},
+        'args': {'sigma': sigma_start},
         'extra_args': ('NLM-FILTER', orig_img, noised_img),
         'history': {'name': [], 'loss': [], 'args': []}
     }
@@ -228,7 +228,7 @@ def get_nlm_df(orig_img, noised_img, sigma_bounds, eval_num):
 
 def main():
     orig_img = cv2.cvtColor(cv2.imread('../dimages/test_dog.jpg'), cv2.COLOR_BGR2GRAY)
-
+    # orig_img = orig_img[300:450, 300:450]
     # original
     orig_img = Image.fromarray(orig_img)
     orig_img.thumbnail((512, 512))
@@ -254,13 +254,13 @@ def main():
             orig_img=orig_img,
             noised_img=noised_img,
             kernel_bounds=(3, 9),
-            sigma_bounds=(1, 50),
-            eval_num=25
+            sigma_start=5,
+            eval_num=None
         ),
         get_nlm_df(
             orig_img=orig_img,
             noised_img=noised_img,
-            sigma_bounds=(1, 50),
+            sigma_start=5,
             eval_num=None
         )
     ],
