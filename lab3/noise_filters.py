@@ -81,6 +81,7 @@ def gaussian_py(x, sigma):
 def get_gaussian_kernel_py(kernel_len, sigma):
     center = kernel_len // 2
     kernel = np.zeros((kernel_len, kernel_len))
+
     for x in range(kernel_len):
         for y in range(kernel_len):
             diff = distance_py(x, y, center, center)

@@ -318,39 +318,70 @@ def draw_res(image_path, noise_sigma):
     }
     # parse original and noised image
     orig_img, noised_img = get_original_and_noised(image_path, noise_sigma)
+    orig_loss = calculate_diff(orig_img, orig_img)
+    noised_loss = calculate_diff(orig_img, noised_img)
 
+    res_csv_dict = {
+        'name': [], 'loss': [], 'time': [],
+        'kernel_len': [],
+        'sigma': [], 'sigma_i': [], 'sigma_s': [],
+        'sw_size': [], 'bw_size': [], 'h_weight': []
+    }
     # getting best results
-    for name in loss_dict.keys():
-        curr_res = curr_df[curr_df['name'] == name]
+    for method_name in loss_dict.keys():
+        curr_res = curr_df[curr_df['name'] == method_name]
         curr_best = curr_res[curr_res['loss'] == curr_res['loss'].min()].iloc[0]
 
+        loss_dict[method_name]['best_args'] = json.loads(str(curr_best['args']))
+
+        start_time = time.time()
         res_img, actual_loss = get_res_from_name(
-            name=name,
+            name=method_name,
             orig_img=orig_img,
             noised_img=noised_img,
-            args=json.loads(str(curr_best['args']))
+            args=loss_dict[method_name]['best_args']
         )
+        res_time = time.time() - start_time
+
+        # getting res table stuff
+        last_missed_arg_names = list(res_csv_dict.keys())
+        for arg_name, arg_val in loss_dict[method_name]['best_args'].items():
+            res_csv_dict[arg_name].append(round(arg_val, 2))
+            last_missed_arg_names.remove(arg_name)
+
+        for arg_name in last_missed_arg_names:
+            if arg_name not in ('name', 'loss', 'time'):
+                res_csv_dict[arg_name].append(None)
+
+        res_csv_dict['name'].append(method_name)
+        res_csv_dict['loss'].append(round(actual_loss, 2))
+        res_csv_dict['time'].append(round(res_time, 2))
+
         # assert curr_best['loss'] == actual_loss
-        loss_dict[name]['img'] = res_img
-        loss_dict[name]['best_loss'] = actual_loss
+        loss_dict[method_name]['img'] = res_img
+        loss_dict[method_name]['best_loss'] = actual_loss
+        loss_dict[method_name]['time'] = res_time
 
     draw_image_and_loss(
         loss_keys=list(loss_dict.keys()),
         loss_list=[res_dict['loss_history'] for res_dict in loss_dict.values()],
-        title=f'{img_name} with sigma = {noise_sigma}',
+        title=f'{img_name} with sigma: {noise_sigma}',
         show=True,
         save_path=f'noise_history_{img_name}_with_sigma_{noise_sigma}.png'
     )
 
     draw_images(
         imgs=[orig_img, noised_img, *[res_dict['img'] for res_dict in loss_dict.values()]],
-        titles=['orig', f'noised with sigma = {noise_sigma}',
-                *[f"{name} with loss = %.2f" % res_dict['best_loss'] for name, res_dict in loss_dict.items()]
-                ],
+        titles=['orig\nloss = %.2f' % orig_loss, f'noised with sigma = {noise_sigma}\nloss = %.2f' % noised_loss,
+                *[f"{name}\nloss = %.2f\ntime = %.2f" % (res_dict['best_loss'], res_dict['time'])
+                  for name, res_dict in loss_dict.items()]],
         plt_shape=(3, 2),
         show=True,
         save_path=f'noise_images_{img_name}_with_sigma_{noise_sigma}.png'
     )
+
+    res_csv_df = pd.DataFrame(res_csv_dict).sort_values(by=['loss'])
+    res_csv_df.to_csv(f'table_{img_name}_with_sigma_{noise_sigma}.csv')
 
 
 if __name__ == '__main__':
