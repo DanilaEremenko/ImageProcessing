@@ -107,29 +107,36 @@ def bilateral_min_func(args, name, orig_img, noised_img, history):
 
 
 ####################################################################################
-def get_nlm_results(sigma, h, orig_img, noised_img):
+def get_nlm_results(sigma, bw_size, sw_size, h_weight, orig_img, noised_img):
     res_img = non_local_means(
         noisy=noised_img,
-        bw_size=30,
-        sw_size=5,
-        h=h,
+        bw_size=bw_size,
+        sw_size=sw_size,
+        h_weight=h_weight,
         sigma=sigma,
         verbose=False
     )
     return res_img, calculate_diff(orig_img, res_img)
 
 
-def nlm_min_func(args, name, orig_img, noised_img, history):
+def nlm_min_func(args, name, orig_img, noised_img, bw_size, sw_size, h_weight, history):
     sigma = args[0]
-    h = 10
-    res_img, diff = get_nlm_results(sigma=sigma, h=h, orig_img=orig_img, noised_img=noised_img)
+
+    res_img, diff = get_nlm_results(
+        sigma=sigma,
+        bw_size=bw_size,
+        sw_size=sw_size,
+        h_weight=h_weight,
+        orig_img=orig_img,
+        noised_img=noised_img
+    )
 
     print(f"{len(history['loss']) + 1}.{name}: {diff}")
 
     add_history_step(
         history=history,
         loss=diff,
-        args_json=json.dumps({'sigma': sigma, 'h': h})
+        args_json=json.dumps({'sigma': sigma, 'h_weight': h_weight, 'bw_size': bw_size, 'sw_size': sw_size})
     )
     return diff
 
@@ -161,26 +168,26 @@ def get_img_from_name(name, orig_img, noised_img, args):
     return res_img
 
 
-def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_start, eval_num):
+def get_compare_df(orig_img, noised_img, kernel_len_start, sigma_start, eval_num):
     #######################################################
     # ----------------- SIMPLE FILTERS --------------------
     #######################################################
     kernels_dict = {
         'MEAN FILTER': {
             'func': mean_min_func,
-            'args': {'kernel_len': kernel_bounds[0]},
+            'args': {'kernel_len': kernel_len_start},
             'extra_args': ('MEAN FILTER', orig_img, noised_img),
             'history': {'name': [], 'args': [], 'loss': []}
         },
         'GAUSSIAN FILTER': {
             'func': gaussian_min_func,
-            'args': {'sigma': sigma_start, 'kernel_len': kernel_bounds[0]},
+            'args': {'sigma': sigma_start, 'kernel_len': kernel_len_start},
             'extra_args': ('GAUSSIAN FILTER', orig_img, noised_img),
             'history': {'name': [], 'args': [], 'loss': []}
         },
         'PYTHON BILATERAL FILTER': {
             'func': bilateral_min_func,
-            'args': {'sigma_i': sigma_start, 'sigma_s': sigma_start, 'kernel_len': kernel_bounds[0]},
+            'args': {'sigma_i': sigma_start, 'sigma_s': sigma_start, 'kernel_len': kernel_len_start},
             'extra_args': ('PYTHON BILATERAL FILTER', orig_img, noised_img),
             'history': {'name': [], 'loss': [], 'args': []}
         }
@@ -203,14 +210,14 @@ def get_compare_df(orig_img, noised_img, kernel_bounds, sigma_start, eval_num):
     return res_df
 
 
-def get_nlm_df(orig_img, noised_img, sigma_start, eval_num):
+def get_nlm_df(orig_img, noised_img, sigma_start, eval_num, bw_size, sw_size, h_weight):
     #######################################################
     # ----------------- NLM -------------------------------
     #######################################################
     hyper_data = {
         'func': nlm_min_func,
         'args': {'sigma': sigma_start},
-        'extra_args': ('NLM-FILTER', orig_img, noised_img),
+        'extra_args': ('NLM-FILTER', orig_img, noised_img, bw_size, sw_size, h_weight),
         'history': {'name': [], 'loss': [], 'args': []}
     }
     name = 'Non-local means'
@@ -226,8 +233,8 @@ def get_nlm_df(orig_img, noised_img, sigma_start, eval_num):
     return res_df
 
 
-def main():
-    orig_img = cv2.cvtColor(cv2.imread('../dimages/test_dog.jpg'), cv2.COLOR_BGR2GRAY)
+def main(img_path, save_path, noise_sigma):
+    orig_img = cv2.cvtColor(cv2.imread(img_path), cv2.COLOR_BGR2GRAY)
     # orig_img = orig_img[300:450, 300:450]
     # original
     orig_img = Image.fromarray(orig_img)
@@ -235,10 +242,7 @@ def main():
     orig_img = np.asarray(orig_img)
     show_image(orig_img, 'ORIGINAL IMAGE')
 
-    # noise
-    NOISE_SIGMA = 10
-
-    noised_img = orig_img + get_gaussian_noise(mean=0, sigma=NOISE_SIGMA, shape=orig_img.shape)
+    noised_img = orig_img + get_gaussian_noise(mean=0, sigma=noise_sigma, shape=orig_img.shape)
     show_image(noised_img, 'NOISED IMAGE')
 
     # run search functions
@@ -253,23 +257,28 @@ def main():
         get_compare_df(
             orig_img=orig_img,
             noised_img=noised_img,
-            kernel_bounds=(3, 9),
-            sigma_start=5,
-            eval_num=None
+            kernel_len_start=3,
+            sigma_start=noise_sigma / 2,
+            eval_num=5
         ),
         get_nlm_df(
             orig_img=orig_img,
             noised_img=noised_img,
-            sigma_start=5,
-            eval_num=None
+            sigma_start=noise_sigma / 2,
+            bw_size=15,
+            sw_size=7,
+            h_weight=0.5,
+            eval_num=5
         )
     ],
         sort=True
     )
+    res_df.to_pickle(save_path)
     return res_df
 
 
 if __name__ == '__main__':
-    res_df = main()
-    res_df.to_pickle('noise.pkl')
-    # res_df = pd.read_pickle('noise.pkl')
+    for image_path in ('../dimages/new_york.webp', '../dimages/test_dog.jpg'):
+        for noise_sigma in (10, 15):
+            img_name = image_path.split('/')[-1].split('.')[0]
+            main(img_path=image_path, save_path=f'noise_{img_name}_{noise_sigma}.pkl', noise_sigma=noise_sigma)
