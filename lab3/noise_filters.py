@@ -91,45 +91,47 @@ def get_gaussian_kernel_py(kernel_len, sigma):
 ######################################################################
 # -------------------- NON-LOCAL MEANS -------------------------------
 ######################################################################
-def non_local_means(noisy, bw_size, sw_size, sigma, h, verbose=True):
-    extd_img = np.pad(noisy, bw_size, mode='reflect')
+def non_local_means(noisy, bw_size, sw_size, sigma, h_weight, verbose=True):
+    extd_img = np.pad(noisy, int(bw_size / 2), mode='reflect')
     return non_local_means_numba(
         src_shape=noisy.shape,
         extd_img=extd_img,
         bw_size=bw_size,
         sw_size=sw_size,
         sigma=sigma,
-        h=h,
+        h_weight=h_weight,
         verbose=verbose
     )
 
 
 @jit(nopython=True)
-def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbose=True):
+def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h_weight, verbose=True):
     output_image = np.zeros((src_shape[0], src_shape[1]))
     extd_h, extd_w = extd_img.shape
 
-    total_iterations = src_shape[0] * src_shape[1] * (2 * bw_size - sw_size) ** 2
+    bw_size_h = int(bw_size / 2)
+    sw_size_h = int(sw_size / 2)
+
+    total_iterations = src_shape[0] * src_shape[1] * (2 * bw_size_h) ** 2
     i = 0
-    # big cycle
-    h = 0.5 * sigma
-    for y in range(bw_size, extd_h - bw_size):
-        for x in range(bw_size, extd_w - bw_size):
+
+    h = h_weight * sigma
+
+    # iterate over original part of image
+    for curr_y in range(bw_size_h, extd_h - bw_size_h):
+        for curr_x in range(bw_size_h, extd_w - bw_size_h):
             # calculate weight using difference between neighbours
-            comp_nbhd = extd_img[y:y + sw_size, x:x + sw_size]
+            comp_nbhd = extd_img[curr_y - sw_size_h:curr_y + sw_size_h, curr_x - sw_size_h:curr_x + sw_size_h]
             pixel_color = 0
             total_weight = 0
-            for ynbh in range(y - bw_size, y + bw_size - sw_size):
-                for xnbh in range(x - bw_size, x + bw_size - sw_size):
+            # iterate over neighbours
+            for ynbh in range(curr_y - bw_size_h + sw_size_h, curr_y + bw_size_h - sw_size_h):
+                for xnbh in range(curr_x - bw_size_h + sw_size_h, curr_x + bw_size_h - sw_size_h):
                     # select curr neighbor
-                    curr_nbhd = extd_img[ynbh:ynbh + sw_size, xnbh:xnbh + sw_size]
+                    curr_nbhd = extd_img[ynbh - sw_size_h:ynbh + sw_size_h, xnbh - sw_size_h:xnbh + sw_size_h]
 
                     # current weight calculating
-                    distance_mat = 0.0
-                    for pix1, pix2 in zip(curr_nbhd.flatten(), comp_nbhd.flatten()):
-                        distance_mat += (pix1 - pix2) ** 2
-                    distance_mat = math.sqrt(distance_mat)
-
+                    distance_mat = math.sqrt(np.sum((comp_nbhd - curr_nbhd) ** 2))
                     weight = math.exp(-((max(distance_mat - 2 * sigma ** 2, 0.0)) / (h ** 2)))
                     total_weight += weight
                     pixel_color += weight * extd_img[ynbh, xnbh]
@@ -142,6 +144,6 @@ def non_local_means_numba(src_shape, extd_img, bw_size, sw_size, sigma, h, verbo
                             print('% COMPLETE = ', percent_complete)
 
             # actually update pixel
-            output_image[y - bw_size, x - bw_size] = pixel_color / total_weight
+            output_image[curr_y - bw_size_h, curr_x - bw_size_h] = pixel_color / total_weight
 
     return output_image
