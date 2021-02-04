@@ -2,7 +2,7 @@ import json
 
 import cv2
 import scipy.optimize as optimizers
-from convolve_filters import calculate_diff, full_conv, full_adaptive_conv
+from lab2.convolve_filters import calculate_diff, full_conv, full_adaptive_conv
 from noise_filters import get_gaussian_kernel_py, get_bilateral_kernel_np, non_local_means, get_bilateral_kernel_py
 import numpy as np
 from PIL import Image
