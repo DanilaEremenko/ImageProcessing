@@ -49,15 +49,17 @@ def closing(A, B):
     return erosion(dilation(A, B), B)
 
 
-def main(img_path, save_path=None):
+def main(img_path, window_shape, invert=True, save_path=None):
     src_img = cv2.imread(img_path, 0)
 
     # бинаризация
     _, binary = cv2.threshold(src_img, 128, 255, cv2.THRESH_BINARY)
-    A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(src_img.shape)
+    if invert:
+        A = np.array([255 if el == 0 else 0 for el in binary.flatten()]).reshape(src_img.shape)
+    else:
+        A = binary
     show_image(A, 'SRC IMAGE')
 
-    window_shape = 9
     B = np.ones(shape=(window_shape, window_shape), dtype=np.uint8) * 255
 
     img_dilation = dilation(A, B)
@@ -78,4 +80,6 @@ def main(img_path, save_path=None):
 
 
 if __name__ == '__main__':
-    main(img_path="../dimages/boundaries_yum.jpg", save_path='morph_boundaries_yum.jpg')
+    main(img_path="../dimages/boundaries_yum.jpg", invert=True, window_shape=9, save_path='morph_boundaries_yum.jpg')
+    main(img_path="../dimages/j_noised.PNG", invert=False, window_shape=3, save_path='j_noised.PNG')
+    main(img_path="../dimages/j_leaky.PNG", invert=False, window_shape=3, save_path='j_leaky.PNG')
