@@ -263,7 +263,7 @@ def write_res(img_path, save_path, noise_sigma):
     orig_img, noised_img = get_original_and_noised(img_path, noise_sigma)
 
     show_image(orig_img, 'ORIGINAL IMAGE')
-    show_image(noised_img, 'NOISED IMAGE')
+    show_image(noised_img, f'NOISED IMAGE WITH SIGMA = {noise_sigma}')
 
     # run search functions
     res_df = pd.concat([
@@ -279,7 +279,7 @@ def write_res(img_path, save_path, noise_sigma):
             noised_img=noised_img,
             kernel_len_start=3,
             sigma_start=noise_sigma / 2,
-            eval_num=5
+            eval_num=None
         ),
         get_nlm_df(
             orig_img=orig_img,
@@ -288,7 +288,7 @@ def write_res(img_path, save_path, noise_sigma):
             bw_size=15,
             sw_size=7,
             h_weight=0.5,
-            eval_num=5
+            eval_num=None
         )
     ],
         sort=True
